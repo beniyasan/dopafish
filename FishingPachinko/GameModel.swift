@@ -41,7 +41,7 @@ struct OldManCue: Identifiable {
 
 struct Caught {
     let name: String
-    let emoji: String
+    let imageName: String
     let rarity: Rarity
     let cm: Int
     let score: Int
@@ -93,22 +93,22 @@ typealias UIColorCompat = UIColor
 
 // MARK: - Fish pools
 
-typealias FishSpec = (name: String, emoji: String, cm: ClosedRange<Int>, score: Int)
+typealias FishSpec = (name: String, imageName: String, cm: ClosedRange<Int>, score: Int)
 
 internal let fishPool: [Rarity: [FishSpec]] = [
-    .n:   [("ワカサギ", "🐟", 6...14, 100), ("メダカ", "🐟", 3...8, 80), ("ハゼ", "🐡", 8...15, 120)],
-    .r:   [("アジ", "🐟", 15...35, 250), ("メバル", "🐠", 15...30, 300), ("サバ", "🐟", 25...45, 280)],
-    .sr:  [("シーバス", "🐠", 50...90, 700), ("マダイ", "🐠", 40...80, 900), ("ブリ", "🐟", 60...110, 800)],
-    .ssr: [("ヒラマサ", "🦈", 100...180, 2200), ("カジキ", "🦈", 200...350, 3000), ("キハダマグロ", "🐟", 120...200, 2600)],
-    .ur:  [("黄金龍魚", "🐉", 300...500, 6000), ("伝説の巨鯛", "🐠", 150...250, 5000)],
-    .lr:  [("虹神クジラ", "🐋", 800...1200, 15000)],
+    .n:   [("ワカサギ", "FishWakasagi", 6...14, 100), ("メダカ", "FishMedaka", 3...8, 80), ("ハゼ", "FishHaze", 8...15, 120)],
+    .r:   [("アジ", "FishAji", 15...35, 250), ("メバル", "FishMebaru", 15...30, 300), ("サバ", "FishSaba", 25...45, 280)],
+    .sr:  [("シーバス", "FishSeabass", 50...90, 700), ("マダイ", "FishMadai", 40...80, 900), ("ブリ", "FishBuri", 60...110, 800)],
+    .ssr: [("ヒラマサ", "FishHiramasa", 100...180, 2200), ("カジキ", "FishKajiki", 200...350, 3000), ("キハダマグロ", "FishYellowfinTuna", 120...200, 2600)],
+    .ur:  [("黄金龍魚", "FishGoldenDragonfish", 300...500, 6000), ("伝説の巨鯛", "FishLegendaryBream", 150...250, 5000)],
+    .lr:  [("虹神クジラ", "FishRainbowWhale", 800...1200, 15000)],
 ]
 
 // 幻魚 — RUSH中のみ超低確率で出現。図鑑には釣るまで載らない
 internal let secretFishPool: [FishSpec] = [
-    ("真夜中の星メダカ", "✨", 5...12, 4000),
-    ("白銀の幻鮫", "🦈", 250...420, 8000),
-    ("古代龍リュウグウノツカイ", "🐉", 450...700, 11000),
+    ("真夜中の星メダカ", "FishMidnightStarMedaka", 5...12, 4000),
+    ("白銀の幻鮫", "FishSilverShark", 250...420, 8000),
+    ("古代龍リュウグウノツカイ", "FishOarfish", 450...700, 11000),
 ]
 
 // MARK: - 魚図鑑 (collection persistence)
@@ -799,7 +799,7 @@ final class GameModel: ObservableObject {
         if rushActive && r.rawValue >= Rarity.ssr.rawValue { rushGain += 2 }
         if rushGain > 0 { rushGain += rushLv }   // RUSH券
 
-        reveal = Caught(name: pick.name, emoji: pick.emoji, rarity: r, cm: cm,
+        reveal = Caught(name: pick.name, imageName: pick.imageName, rarity: r, cm: cm,
                         score: sc, medals: medal, perfect: perfect, isRecord: isRecord,
                         rushGain: rushGain, isSmall: small, isSecret: isSecret)
         phase = .reveal

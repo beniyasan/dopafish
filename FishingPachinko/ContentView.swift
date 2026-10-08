@@ -453,71 +453,91 @@ struct RevealCard: View {
     @State private var pop = false
 
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.5).ignoresSafeArea()
-            VStack(spacing: 10) {
-                Text(caught.rarity.label)
-                    .font(.system(size: 40, weight: .black, design: .rounded))
-                    .foregroundStyle(caught.rarity.color)
-                    .shadow(color: caught.rarity.color, radius: 16)
-                if caught.isSecret {
-                    Text("✦ シークレット!! ✦")
-                        .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(
-                            LinearGradient(colors: [.purple, .pink, .cyan],
-                                           startPoint: .leading, endPoint: .trailing))
-                        .shadow(color: .purple, radius: 10)
+        GeometryReader { geometry in
+            ZStack {
+                Color.black.opacity(0.5).ignoresSafeArea()
+                ScrollView {
+                    RevealCardContent(caught: caught, artworkVisible: pop)
+                        .padding(22)
+                        .frame(width: min(geometry.size.width - 32, 360))
+                        .background(.black.opacity(0.82), in: RoundedRectangle(cornerRadius: 24))
+                        .overlay(RoundedRectangle(cornerRadius: 24)
+                            .stroke(caught.rarity.color, lineWidth: 3)
+                            .shadow(color: caught.rarity.color, radius: 10))
+                        .scaleEffect(pop ? 1 : 0.4)
+                        .opacity(pop ? 1 : 0)
+                        .padding(.vertical, 16)
+                        .frame(maxWidth: .infinity, minHeight: geometry.size.height)
                 }
-                Text(caught.emoji)
-                    .font(.system(size: 110))
-                    .scaleEffect(pop ? 1 : 0.2)
-                    .rotationEffect(.degrees(pop ? 0 : -30))
-                if caught.isSmall {
-                    Text("…実は小物だった")
-                        .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(.gray)
-                }
-                Text(caught.name)
-                    .font(.system(size: 30, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-                Text("\(caught.cm) cm")
-                    .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundStyle(.cyan)
-                if caught.isRecord {
-                    Text("✨ NEW RECORD! ✨")
-                        .font(.system(size: 18, weight: .black, design: .rounded))
-                        .foregroundStyle(.yellow)
-                }
-                if caught.perfect {
-                    Text("PERFECT BONUS ×1.5")
-                        .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(.orange)
-                }
-                Text("+\(caught.score) pt   🪙+\(caught.medals)")
-                    .font(.system(size: 20, weight: .black, design: .rounded))
-                    .foregroundStyle(.yellow)
-                if caught.rushGain > 0 {
-                    Text("RUSH +\(caught.rushGain) 回転!!")
-                        .font(.system(size: 19, weight: .black, design: .rounded))
-                        .foregroundStyle(.red)
-                        .padding(.horizontal, 16).padding(.vertical, 5)
-                        .background(.yellow, in: Capsule())
-                }
-                Text("タップで続く")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
-                    .padding(.top, 4)
+                .scrollBounceBehavior(.basedOnSize)
+                .defaultScrollAnchor(.top)
             }
-            .padding(28)
-            .background(.black.opacity(0.82), in: RoundedRectangle(cornerRadius: 24))
-            .overlay(RoundedRectangle(cornerRadius: 24)
-                .stroke(caught.rarity.color, lineWidth: 3)
-                .shadow(color: caught.rarity.color, radius: 10))
-            .scaleEffect(pop ? 1 : 0.4)
-            .opacity(pop ? 1 : 0)
         }
         .onAppear {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) { pop = true }
+        }
+    }
+}
+
+struct RevealCardContent: View {
+    let caught: Caught
+    var artworkVisible = true
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Text(caught.rarity.label)
+                .font(.system(size: 40, weight: .black, design: .rounded))
+                .foregroundStyle(caught.rarity.color)
+                .shadow(color: caught.rarity.color, radius: 16)
+            if caught.isSecret {
+                Text("✦ シークレット!! ✦")
+                    .font(.system(size: 16, weight: .black, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(colors: [.purple, .pink, .cyan],
+                                       startPoint: .leading, endPoint: .trailing))
+                    .shadow(color: .purple, radius: 10)
+            }
+            FishArtwork(imageName: caught.imageName, name: caught.name)
+                .scaleEffect(artworkVisible ? 1 : 0.2)
+                .rotationEffect(.degrees(artworkVisible ? 0 : -30))
+            if caught.isSmall {
+                Text("…実は小物だった")
+                    .font(.system(size: 15, weight: .black, design: .rounded))
+                    .foregroundStyle(.gray)
+            }
+            Text(caught.name)
+                .font(.system(size: 30, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
+            Text("\(caught.cm) cm")
+                .font(.system(size: 22, weight: .black, design: .rounded))
+                .foregroundStyle(.cyan)
+            if caught.isRecord {
+                Text("✨ NEW RECORD! ✨")
+                    .font(.system(size: 18, weight: .black, design: .rounded))
+                    .foregroundStyle(.yellow)
+            }
+            if caught.perfect {
+                Text("PERFECT BONUS ×1.5")
+                    .font(.system(size: 14, weight: .black, design: .rounded))
+                    .foregroundStyle(.orange)
+            }
+            Text("+\(caught.score) pt   🪙+\(caught.medals)")
+                .font(.system(size: 20, weight: .black, design: .rounded))
+                .foregroundStyle(.yellow)
+            if caught.rushGain > 0 {
+                Text("RUSH +\(caught.rushGain) 回転!!")
+                    .font(.system(size: 19, weight: .black, design: .rounded))
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 16).padding(.vertical, 5)
+                    .background(.yellow, in: Capsule())
+            }
+            Text("タップで続く")
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.6))
+                .padding(.top, 4)
         }
     }
 }

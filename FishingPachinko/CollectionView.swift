@@ -78,7 +78,7 @@ struct DexOverlay: View {
                 .font(.system(size: 13, weight: .black, design: .rounded))
                 .foregroundStyle(rarity.color)
             ForEach(fishPool[rarity] ?? [], id: \.name) { fish in
-                dexRow(name: fish.name, emoji: fish.emoji, rarity: rarity, secret: false)
+                dexRow(fish: fish, rarity: rarity, secret: false)
             }
         }
     }
@@ -97,25 +97,50 @@ struct DexOverlay: View {
             } else {
                 ForEach(secretFishPool, id: \.name) { fish in
                     if dex.entry(fish.name).count > 0 {
-                        dexRow(name: fish.name, emoji: fish.emoji, rarity: .lr, secret: true)
+                        dexRow(fish: fish, rarity: .lr, secret: true)
                     }
                 }
             }
         }
     }
 
-    private func dexRow(name: String, emoji: String, rarity: Rarity, secret: Bool) -> some View {
-        let e = dex.entry(name)
-        let caught = e.count > 0
-        return HStack(spacing: 10) {
-            Text(caught ? emoji : "❔")
-                .font(.system(size: 26))
-                .frame(width: 38)
+    private func dexRow(fish: FishSpec, rarity: Rarity, secret: Bool) -> some View {
+        let e = dex.entry(fish.name)
+        return FishDexRow(fish: fish, rarity: rarity, secret: secret, count: e.count, maxCm: e.maxCm)
+    }
+}
+
+struct FishDexRow: View {
+    let fish: FishSpec
+    let rarity: Rarity
+    let secret: Bool
+    let count: Int
+    let maxCm: Int
+
+    private var caught: Bool { count > 0 }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Group {
+                if caught {
+                    FishArtwork(imageName: fish.imageName, name: fish.name)
+                } else {
+                    Image(systemName: "questionmark")
+                        .font(.system(size: 26, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.35))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(.white.opacity(0.03), in: RoundedRectangle(cornerRadius: 10))
+                        .accessibilityLabel("未捕獲")
+                }
+            }
+            .frame(width: 84, height: 56)
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 6) {
-                    Text(caught ? name : "？？？")
-                        .font(.system(size: 16, weight: .black, design: .rounded))
+                    Text(caught ? fish.name : "？？？")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
                         .foregroundStyle(caught ? .white : .white.opacity(0.35))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                     if secret {
                         Text("幻")
                             .font(.system(size: 10, weight: .black, design: .rounded))
@@ -124,15 +149,17 @@ struct DexOverlay: View {
                             .background(.purple, in: Capsule())
                     }
                 }
-                Text(caught ? "最大 \(e.maxCm)cm" : "未捕獲")
+                Text(caught ? "最大 \(maxCm)cm" : "未捕獲")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(caught ? .cyan : .white.opacity(0.3))
             }
-            Spacer()
+            Spacer(minLength: 4)
             if caught {
-                Text("×\(e.count)")
+                Text("×\(count)")
                     .font(.system(size: 14, weight: .black, design: .rounded))
                     .foregroundStyle(.yellow)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
         }
         .padding(.horizontal, 10)
