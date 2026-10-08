@@ -12,7 +12,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.devin.FishingPachinko
-        PRODUCT_NAME: 爆釣パチンコ
+        PRODUCT_NAME: Dopagaki Fishing Collection
         TARGETED_DEVICE_FAMILY: 1
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
@@ -34,7 +34,7 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
         SWIFT_VERSION: "5.9"
-        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/爆釣パチンコ.app/爆釣パチンコ"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Dopagaki Fishing Collection.app/Dopagaki Fishing Collection"
         BUNDLE_LOADER: "$(TEST_HOST)"
 schemes:
   FishingPachinko:

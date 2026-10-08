@@ -1,7 +1,7 @@
 # Dopagaki Fishing Collection
 
 iPhone向け 釣り×パチンコ演出ゲーム。SwiftUI + SpriteKit で作ったネイティブアプリ。
-釣り場やエフェクトはコード描画、おじさんは生成イラストの画像アセット、SE・BGMはコード内合成。外部ライブラリ依存ゼロ。
+釣り場やエフェクトはコード描画、おじさんと全18種の魚は生成イラストの画像アセット、SE・BGMはコード内合成。外部ライブラリ依存ゼロ。
 
 ## 遊び方
 
@@ -19,6 +19,7 @@ iPhone向け 釣り×パチンコ演出ゲーム。SwiftUI + SpriteKit で作っ
 - 激アツでもガセあり。カットインは当たり抽選を変更せず、連打開始・結果表示前に消える
 - 派手演出: 熱いリーチで集中線＋魚影オーラ＋赤い脈動ヴィネット、金/虹リーチで雷撃、SR+で光柱、UR/LRで紙吹雪＋星屑シャワー＋雷撃、連打はタップ衝撃波、逃走時はライン切断
 - **魚図鑑**: 待機画面の「図鑑」ボタン。種別の釣獲数・最大サイズを記録（UserDefaults永続化）。未捕獲は？？？表示
+- **魚イラスト**: 全18種を水彩・ガッシュ風で統一。捕獲済みの図鑑と釣果カードに全身イラストを表示。未捕獲・未発見の幻魚は画像も非公開。釣果カードは小さい画面でもスクロール可能
 - **釣具屋**: コインで装備強化（Lv0〜5・永続）。金の竿=高レア魚解禁/確率UP、強化リール=逃走時にLv確率で小型以上を再抽選（Lvが高いほど大物寄り）+連打猶予、RUSH券=突入回転+Lv分
 - **幻魚**: 竿MAXでのみ低確率出現するシークレット魚。図鑑にも釣るまで載らない
 
@@ -68,6 +69,8 @@ xcodebuild -project FishingPachinko.xcodeproj -scheme FishingPachinko \
 - `ContentView.swift` — HUD・バナー・ボタン・リーチカード等 SwiftUI オーバーレイ
 - `OldManView.swift` — おじさんの会話吹き出し・赤／金カットイン
 - `Assets.xcassets/OldManNormal.imageset` / `OldManHot.imageset` — 通常／激アツの透過イラスト
+- `Assets.xcassets/Fish*.imageset` — 全18種の魚イラスト（1536×1024、JPEG）
+- `FishArtwork.swift` — 魚の全身をトリミングせず表示する共通ビュー
 - `GameScene.swift` — SpriteKit 描画（海・ウキ・魚影・パーティクル・カメラズーム）
 - `GameModel.swift` — ゲーム状態機械・確率・リーチ演出スクリプト・ファイト・RUSH・装備強化・図鑑
 - `CollectionView.swift` — 魚図鑑（DexOverlay）・釣具屋（ShopOverlay）画面
