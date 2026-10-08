@@ -137,4 +137,62 @@ final class FishArtworkTests: XCTestCase {
             }
         }
     }
+
+    @MainActor
+    func testOverflowingRevealCardStartsAtTopAndCanScrollToBottom() async throws {
+        let (window, scrollView) = try await revealScrollView(height: 320)
+        defer { window.isHidden = true }
+
+        XCTAssertGreaterThan(scrollView.contentSize.height, scrollView.bounds.height + 50)
+        XCTAssertEqual(scrollView.contentOffset.y, -scrollView.adjustedContentInset.top, accuracy: 1)
+
+        let bottomOffset =
+            scrollView.contentSize.height - scrollView.bounds.height
+            + scrollView.adjustedContentInset.bottom
+        scrollView.setContentOffset(CGPoint(x: 0, y: bottomOffset), animated: false)
+        XCTAssertEqual(scrollView.contentOffset.y, bottomOffset, accuracy: 1)
+        XCTAssertGreaterThan(scrollView.contentOffset.y, 50)
+    }
+
+    @MainActor
+    func testRevealCardFillsViewportWhenContentFits() async throws {
+        let (window, scrollView) = try await revealScrollView(height: 900)
+        defer { window.isHidden = true }
+
+        XCTAssertEqual(scrollView.contentSize.height, scrollView.bounds.height, accuracy: 1)
+        XCTAssertEqual(scrollView.contentOffset.y, -scrollView.adjustedContentInset.top, accuracy: 1)
+    }
+
+    @MainActor
+    private func revealScrollView(height: CGFloat) async throws -> (UIWindow, UIScrollView) {
+        let fish = try XCTUnwrap(secretFishPool.last)
+        let caught = Caught(
+            name: fish.name, imageName: fish.imageName, rarity: .lr,
+            cm: fish.cm.upperBound, score: fish.score, medals: fish.score / 12,
+            perfect: true, isRecord: true, rushGain: 15, isSmall: false, isSecret: true)
+        let controller = UIHostingController(
+            rootView: RevealCard(caught: caught).frame(width: 393, height: height))
+        let window = UIWindow(frame: UIScreen.main.bounds)
+        window.rootViewController = controller
+        window.makeKeyAndVisible()
+        controller.view.layoutIfNeeded()
+        try await Task.sleep(nanoseconds: 500_000_000)
+        controller.view.layoutIfNeeded()
+
+        guard let scrollView = findScrollView(in: controller.view) else {
+            window.isHidden = true
+            XCTFail("Reveal card must contain a scroll view")
+            throw NSError(domain: "FishArtworkTests", code: 1)
+        }
+        return (window, scrollView)
+    }
+
+    @MainActor
+    private func findScrollView(in view: UIView) -> UIScrollView? {
+        if let scrollView = view as? UIScrollView { return scrollView }
+        for subview in view.subviews {
+            if let scrollView = findScrollView(in: subview) { return scrollView }
+        }
+        return nil
+    }
 }

@@ -467,10 +467,10 @@ struct RevealCard: View {
                         .scaleEffect(pop ? 1 : 0.4)
                         .opacity(pop ? 1 : 0)
                         .padding(.vertical, 16)
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity, minHeight: geometry.size.height)
                 }
                 .scrollBounceBehavior(.basedOnSize)
-                .defaultScrollAnchor(.center)
+                .defaultScrollAnchor(.top)
             }
         }
         .onAppear {
