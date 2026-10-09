@@ -451,20 +451,22 @@ struct BannerView: View {
 struct RevealCard: View {
     let caught: Caught
     @State private var pop = false
+    private var spec: CardFXSpec { .forCatch(caught) }
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                Color.black.opacity(0.5).ignoresSafeArea()
+                Color.black.opacity(spec.dimOpacity).ignoresSafeArea()
+                CardFXBackdrop(spec: spec)
                 ScrollView {
-                    RevealCardContent(caught: caught, artworkVisible: pop)
+                    RevealCardContent(caught: caught, spec: spec, artworkVisible: pop)
                         .padding(22)
                         .frame(width: min(geometry.size.width - 32, 360))
                         .background(.black.opacity(0.82), in: RoundedRectangle(cornerRadius: 24))
-                        .overlay(RoundedRectangle(cornerRadius: 24)
-                            .stroke(caught.rarity.color, lineWidth: 3)
-                            .shadow(color: caught.rarity.color, radius: 10))
-                        .scaleEffect(pop ? 1 : 0.4)
+                        .overlay(CardBorder(spec: spec))
+                        .overlay(ShineSweep(spec: spec))
+                        .scaleEffect(pop ? 1 : spec.entryScale)
+                        .rotationEffect(.degrees(pop ? 0 : spec.entrySpin))
                         .opacity(pop ? 1 : 0)
                         .padding(.vertical, 16)
                         .frame(maxWidth: .infinity, minHeight: geometry.size.height)
@@ -474,21 +476,28 @@ struct RevealCard: View {
             }
         }
         .onAppear {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) { pop = true }
+            withAnimation(.spring(response: 0.38,
+                                  dampingFraction: spec.tier >= 3 ? 0.48 : 0.6)
+                .delay(spec.entryDelay)) { pop = true }
         }
     }
 }
 
 struct RevealCardContent: View {
     let caught: Caught
+    var spec: CardFXSpec
     var artworkVisible = true
+    @State private var labelPulse = false
+
+    init(caught: Caught, spec: CardFXSpec? = nil, artworkVisible: Bool = true) {
+        self.caught = caught
+        self.spec = spec ?? .forCatch(caught)
+        self.artworkVisible = artworkVisible
+    }
 
     var body: some View {
         VStack(spacing: 10) {
-            Text(caught.rarity.label)
-                .font(.system(size: 40, weight: .black, design: .rounded))
-                .foregroundStyle(caught.rarity.color)
-                .shadow(color: caught.rarity.color, radius: 16)
+            rarityLabel
             if caught.isSecret {
                 Text("✦ シークレット!! ✦")
                     .font(.system(size: 16, weight: .black, design: .rounded))
@@ -539,5 +548,40 @@ struct RevealCardContent: View {
                 .foregroundStyle(.white.opacity(0.6))
                 .padding(.top, 4)
         }
+    }
+
+    /// レア度ラベル — SSR+ で脈動、LR で虹色回転
+    @ViewBuilder private var rarityLabel: some View {
+        if spec.hueCycle {
+            TimelineView(.animation) { tl in
+                rarityBase
+                    .hueRotation(.degrees(tl.date.timeIntervalSinceReferenceDate * 90))
+            }
+        } else {
+            rarityBase
+        }
+    }
+
+    private var rarityBase: some View {
+        Text(caught.rarity.label)
+            .font(.system(size: 40, weight: .black, design: .rounded))
+            .foregroundStyle(labelFill)
+            .shadow(color: spec.accent, radius: 16)
+            .scaleEffect(spec.labelPulse && labelPulse ? 1.12 : 1)
+            .animation(
+                spec.labelPulse
+                    ? .easeInOut(duration: 0.55).repeatForever(autoreverses: true)
+                    : .default,
+                value: labelPulse)
+            .onAppear { labelPulse = true }
+    }
+
+    private var labelFill: AnyShapeStyle {
+        if spec.hueCycle {
+            return AnyShapeStyle(LinearGradient(
+                colors: [.red, .orange, .yellow, .green, .blue, .purple],
+                startPoint: .leading, endPoint: .trailing))
+        }
+        return AnyShapeStyle(spec.accent)
     }
 }
