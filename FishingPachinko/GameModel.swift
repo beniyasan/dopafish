@@ -232,6 +232,7 @@ final class GameModel: ObservableObject {
         return a[i + 1]
     }()
     private let fast = CommandLine.arguments.contains("-fast")
+    private let autoStart = CommandLine.arguments.contains("-go")   // デバッグ: タイトル不要で即キャスト
     private let autoWin = CommandLine.arguments.contains("-win")   // デバッグ: 連打を自動化して当たり演出を確認する
     private let forceSecret = CommandLine.arguments.contains("-secret")   // デバッグ: 次の釣果を幻魚にする
     private var mashMult: Double = {
@@ -245,6 +246,8 @@ final class GameModel: ObservableObject {
     // MARK: clock / scheduler
 
     func tick(_ dt: Double) {
+        // デバッグ -go: updateが回っている=シーン準備済みなのでここで開始する
+        if autoStart && phase == .title { startGame() }
         now += dt
         while let first = pending.first, first.t <= now {
             pending.removeFirst()
@@ -295,6 +298,10 @@ final class GameModel: ObservableObject {
         fx?.resetScene()
         fx?.setRushLook(rushActive)
         scheduleAmbient()
+        // デバッグ -go: tick経由で呼ばれた場合は即キャスト（シーン準備後なので安全）
+        if autoStart {
+            schedule(0.3) { [weak self] in self?.performCast(0.8) }
+        }
     }
 
     func pressCast() {
