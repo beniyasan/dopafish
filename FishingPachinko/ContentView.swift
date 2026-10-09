@@ -93,6 +93,11 @@ struct ContentView: View {
                     .onTapGesture { model.dismissReveal() }
             }
 
+            if let report = model.escapeReport {
+                EscapeCard(report: report, onTap: { model.dismissEscape() })
+                    .id(report.id)
+            }
+
             if let summary = model.rushSummary {
                 RushEndView(summary: summary, onContinue: model.dismissRushSummary)
             }
@@ -317,6 +322,14 @@ struct ContentView: View {
     private var mashMeter: some View {
         VStack(spacing: 14) {
             Spacer()
+            let left = model.mashTapsLeft ?? 0
+            Text("あと\(left)回!!")
+                .font(.system(size: 30, weight: .black, design: .rounded))
+                .foregroundStyle(LinearGradient(colors: [.yellow, .red],
+                                                startPoint: .top, endPoint: .bottom))
+                .shadow(color: .red, radius: 10)
+                .contentTransition(.numericText())
+                .opacity((1...5).contains(left) ? 1 : 0)
             ZStack(alignment: .leading) {
                 Capsule().fill(.white.opacity(0.2)).frame(height: 34)
                 Capsule()

@@ -172,6 +172,9 @@ final class GameModel: ObservableObject {
     @Published var mashCount = 0
     @Published var mashFill: Double = 0
     @Published var mashRemain: Double = 0
+    /// 本物の魚が掛かっている時だけの残り必要連打数（ガセ中はnil）
+    @Published private(set) var mashTapsLeft: Int?
+    @Published private(set) var escapeReport: EscapeReport?
     @Published var autoCast = false
     var autoPower: Double = 0.65
     @Published var oldManCue: OldManCue?
@@ -219,7 +222,7 @@ final class GameModel: ObservableObject {
     // internals
     private var now: Double = 0
     private var pending: [(t: Double, act: () -> Void)] = []
-    private var result: Rarity? = nil       // nil = miss
+    var result: Rarity? = nil               // nil = miss（テストから設定できるようinternal）
     @Published private(set) var reachKind = 0   // 0 normal 1 long 2 super 3 premium 4 rainbow
     private var biteTimer = 0.0
     private var landed = false
@@ -231,6 +234,7 @@ final class GameModel: ObservableObject {
     private var mashDone = false            // 連打フェーズが解決済みか（多重resolveCatch防止）
     private var rushCasts = 0
     private var rushStartScore = 0
+    private var escapeShownAt = 0.0
 
     // debug: -rig ur / -rig miss etc, -fast for instant bites
     private let rig: String? = {
@@ -449,6 +453,7 @@ final class GameModel: ObservableObject {
     }
 
     private func pickReach() {
+        if rig == "bluff" { reachKind = 2; return }   // デバッグ: ガセのスーパーリーチ
         let r = Double.random(in: 0...1)
         switch result {
         case .none: reachKind = r < 0.70 ? 0 : (r < 0.92 ? 1 : 2)          // 8% super-reach bluff!
@@ -719,6 +724,7 @@ final class GameModel: ObservableObject {
         mashDone = false
         mashDur = 2.4 + 0.32 * Double(reachKind) + 0.4 * Double(reelLv)
         mashNeed = Int(Double(result.map { [8, 10, 14, 18, 22, 28][$0.rawValue] } ?? 999) * mashMult)
+        mashTapsLeft = result == nil ? nil : mashNeed
         prompt = "連打!!"
         promptHot = true
         snd.play("cutin")
@@ -742,6 +748,8 @@ final class GameModel: ObservableObject {
             startGame()
         case .rushEnding:
             dismissRushSummary()
+        case .escaping:
+            dismissEscape()
         default: break
         }
     }
@@ -757,6 +765,7 @@ final class GameModel: ObservableObject {
         let raw = Double(mashCount) / Double(max(1, mashNeed))
         // ハズレ結果は連打してもメーターが85%で止まる — クライマックスでバレる
         mashFill = result == nil ? min(raw, 0.85 + 0.04 * sin(mashT * 9)) : min(1, raw)
+        if result != nil { mashTapsLeft = max(0, mashNeed - mashCount) }
         if let r = result, mashCount >= mashNeed {
             // overfill = 激連打 bonus
             let perfect = mashCount >= Int(Double(mashNeed) * 1.25)
@@ -769,10 +778,16 @@ final class GameModel: ObservableObject {
         if let r = result, mashCount >= mashNeed {
             _ = r
             resolveCatch(perfect: false)
-        } else if result == nil {
-            escape("惜しい!! 逃げられた…")   // ガセ / バレた
+        } else if let r = result {
+            // 連打不足 — 実際に掛かっていた魚を見せる（図鑑・スコアには記録しない）
+            let fish = fishPool[r]!.randomElement()!
+            let kind = EscapeReport.Kind.lineBreak(
+                rarity: r, fishName: fish.name, imageName: fish.imageName,
+                cm: Int.random(in: fish.cm), discovered: DexStore.shared.entry(fish.name).count > 0)
+            escape(report: EscapeReport(kind: kind, mashCount: mashCount, mashNeed: mashNeed))
         } else {
-            escape("バラした… あと少し!")    // 連打不足
+            // ガセ — 大きな影だけで魚はいなかった
+            escape(report: EscapeReport(kind: .bluff, mashCount: mashCount, mashNeed: mashNeed))
         }
     }
 
@@ -897,10 +912,11 @@ final class GameModel: ObservableObject {
         }
     }
 
-    private func escape(_ reason: String) {
+    private func escape(_ reason: String = "", report: EscapeReport? = nil) {
         oldManCue = nil
         phase = .escaping
         prompt = ""
+        mashTapsLeft = nil
         tension = 0
         combo = 0
         snd.play("escape")
@@ -913,8 +929,29 @@ final class GameModel: ObservableObject {
         fx?.setAura(0)
         fx?.lineSnap()
         doFlash(.black, 0.35, 0.3)
-        showBanner(reason, style: .miss, ttl: 1.2)
-        schedule(1.3) { [weak self] in self?.toIdle() }
+        guard let report else {
+            showBanner(reason, style: .miss, ttl: 1.2)
+            schedule(1.3) { [weak self] in self?.toIdle() }
+            return
+        }
+        banner = nil
+        escapeReport = report
+        escapeShownAt = now
+        if report.isNearMiss || report.isBigFish {
+            fx?.shake(report.isNearMiss ? 6 : 4)
+        }
+        schedule(EscapeReport.displayDuration) { [weak self] in
+            guard self?.escapeReport?.id == report.id else { return }
+            self?.dismissEscape(force: true)
+        }
+    }
+
+    /// 逃げ演出を閉じる。連打の勢いで即スキップされないよう、表示直後のタップは無視する
+    func dismissEscape(force: Bool = false) {
+        guard phase == .escaping, escapeReport != nil else { return }
+        guard force || now - escapeShownAt >= EscapeReport.skipLockDuration else { return }
+        escapeReport = nil
+        toIdle()
     }
 
     private func toIdle() {
