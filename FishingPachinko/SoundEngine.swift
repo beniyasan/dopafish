@@ -157,7 +157,7 @@ final class SoundEngine {
 
     private var sePlayers: [String: [AVAudioPlayer]] = [:]
     private var seIndex: [String: Int] = [:]
-    private var bgmPlayer: AVAudioPlayer?
+    private(set) var bgmPlayer: AVAudioPlayer?
     private var currentBGM: BGM?
     var muted = false { didSet { applyMute() } }
 
@@ -241,6 +241,11 @@ final class SoundEngine {
             s.add(at: 0.5, dur: 0.8, wave: .saw, f0: 523, gain: 0.25)
             s.add(at: 0.5, dur: 0.8, wave: .saw, f0: 784, gain: 0.2)
         }
+        defs["rush_out"] = { s in
+            for (i, f) in [784.0, 659, 523, 392].enumerated() {
+                s.add(at: Double(i) * 0.16, dur: 0.42, wave: .tri, f0: f, gain: 0.3)
+            }
+        }
         defs["charge"] = { s in s.add(at: 0, dur: 0.7, wave: .sine, f0: 220, f1: 880, gain: 0.25) }
         defs["cast"] = { s in s.add(at: 0, dur: 0.25, wave: .noise, f0: 2500, f1: 700, gain: 0.3, lpf: true) }
         defs["deny"] = { s in s.add(at: 0, dur: 0.15, wave: .square, f0: 220, f1: 180, gain: 0.3) }
@@ -309,8 +314,13 @@ final class SoundEngine {
     }
 
     func stopBGM() {
-        bgmPlayer?.setVolume(0, fadeDuration: 0.3)
+        let player = bgmPlayer
+        bgmPlayer = nil
         currentBGM = nil
+        player?.setVolume(0, fadeDuration: 0.3)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            player?.stop()
+        }
     }
 
     private func applyMute() {
