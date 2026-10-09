@@ -7,14 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		024947DFF8D8B37DAD554135 /* RushViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67F7A83A1A571393749163EF /* RushViews.swift */; };
 		19E3060E6EC503446DA18497 /* OldManTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECF85F5742E1CE9F043C3BE7 /* OldManTests.swift */; };
 		23CA9FC644ADE23351DF983E /* FishArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA90F721514E916DB23FCB60 /* FishArtwork.swift */; };
 		457F57D4E45A684876A066F1 /* CollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7781FB7CA42FAD4ADB4EE74 /* CollectionView.swift */; };
 		5A9766C6710A1C5CD67025CF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1803FBD6526624CD12129F4B /* Assets.xcassets */; };
 		82E6463AF658D400FE06F2F5 /* SoundEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60635CAF5FEEA55D6A798A31 /* SoundEngine.swift */; };
 		9BA555C5837D873889E53226 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AF0A51799CA2E149802AD58 /* ContentView.swift */; };
+		B146D0CF97AD54E8BEECA738 /* RushStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37034450851DEBE0C2097C31 /* RushStatus.swift */; };
 		B47CA6C9103A1C951C9BD799 /* GameModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD08E67B146BC794A073F43 /* GameModel.swift */; };
 		B4C51D0954212F089D494C98 /* RevealCardFXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E252BC91E86BDE32D5EC8AAC /* RevealCardFXTests.swift */; };
+		B6AA4D6EA428E3D24EE7EA34 /* RushTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D63D8AD13E651D65B5AF1F /* RushTests.swift */; };
 		DC1A952011D0B59A1746824E /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C39DBF1B393F538512E4A2 /* GameScene.swift */; };
 		DED4DB5221D4D4034655932B /* FishingPachinkoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 768699E885CEF2CBA9D53273 /* FishingPachinkoApp.swift */; };
 		E644300DD4E63540958DA6E9 /* OldManView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C72B521F2EEF15D050A182E /* OldManView.swift */; };
@@ -33,9 +36,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		11D63D8AD13E651D65B5AF1F /* RushTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RushTests.swift; sourceTree = "<group>"; };
 		1803FBD6526624CD12129F4B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		37034450851DEBE0C2097C31 /* RushStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RushStatus.swift; sourceTree = "<group>"; };
 		5AF0A51799CA2E149802AD58 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		60635CAF5FEEA55D6A798A31 /* SoundEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundEngine.swift; sourceTree = "<group>"; };
+		67F7A83A1A571393749163EF /* RushViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RushViews.swift; sourceTree = "<group>"; };
 		6C72B521F2EEF15D050A182E /* OldManView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OldManView.swift; sourceTree = "<group>"; };
 		768699E885CEF2CBA9D53273 /* FishingPachinkoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FishingPachinkoApp.swift; sourceTree = "<group>"; };
 		A3C39DBF1B393F538512E4A2 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
@@ -66,6 +72,7 @@
 				BE822CFEF8042FCDADECD67D /* FishArtworkTests.swift */,
 				ECF85F5742E1CE9F043C3BE7 /* OldManTests.swift */,
 				E252BC91E86BDE32D5EC8AAC /* RevealCardFXTests.swift */,
+				11D63D8AD13E651D65B5AF1F /* RushTests.swift */,
 			);
 			path = FishingPachinkoTests;
 			sourceTree = "<group>";
@@ -82,6 +89,8 @@
 				A3C39DBF1B393F538512E4A2 /* GameScene.swift */,
 				6C72B521F2EEF15D050A182E /* OldManView.swift */,
 				C40F7DB59380E788BA76A88F /* RevealCardFX.swift */,
+				37034450851DEBE0C2097C31 /* RushStatus.swift */,
+				67F7A83A1A571393749163EF /* RushViews.swift */,
 				60635CAF5FEEA55D6A798A31 /* SoundEngine.swift */,
 			);
 			path = FishingPachinko;
@@ -185,6 +194,7 @@
 				E90E4BCA39B16E3A056D2C3D /* FishArtworkTests.swift in Sources */,
 				19E3060E6EC503446DA18497 /* OldManTests.swift in Sources */,
 				B4C51D0954212F089D494C98 /* RevealCardFXTests.swift in Sources */,
+				B6AA4D6EA428E3D24EE7EA34 /* RushTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -200,6 +210,8 @@
 				DC1A952011D0B59A1746824E /* GameScene.swift in Sources */,
 				E644300DD4E63540958DA6E9 /* OldManView.swift in Sources */,
 				FC4484C38FD816A02038C55E /* RevealCardFX.swift in Sources */,
+				B146D0CF97AD54E8BEECA738 /* RushStatus.swift in Sources */,
+				024947DFF8D8B37DAD554135 /* RushViews.swift in Sources */,
 				82E6463AF658D400FE06F2F5 /* SoundEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

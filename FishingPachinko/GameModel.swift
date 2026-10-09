@@ -5,7 +5,7 @@ import Combine
 // MARK: - Types
 
 enum Phase {
-    case title, idle, charging, flying, waiting, reach, mash, reveal, escaping
+    case title, idle, charging, flying, waiting, reach, mash, reveal, escaping, rushEnding
 }
 
 enum Rarity: Int, CaseIterable { case n, r, sr, ssr, ur, lr
@@ -157,6 +157,11 @@ final class GameModel: ObservableObject {
     @Published var combo = 0
     @Published var rushLeft = 0
     @Published var rushActive = false
+    @Published private(set) var rushSummary: RushSummary?
+    var rushStatus: RushStatus { RushStatus(remaining: rushLeft) }
+    var rushBonusProbability: Double {
+        RushRules.bonusProbability(rareLevel: rareLv, reelLevel: reelLv)
+    }
     @Published var banner: Banner?
     @Published var prompt: String = ""
     @Published var promptHot = false
@@ -224,6 +229,8 @@ final class GameModel: ObservableObject {
     private var mashDur = 3.0
     private var mashNeed = 12
     private var mashDone = false            // 連打フェーズが解決済みか（多重resolveCatch防止）
+    private var rushCasts = 0
+    private var rushStartScore = 0
 
     // debug: -rig ur / -rig miss etc, -fast for instant bites
     private let rig: String? = {
@@ -292,7 +299,15 @@ final class GameModel: ObservableObject {
 
     func startGame() {
         snd.prepare()
-        snd.bgm(.idle)
+        #if DEBUG
+        if let spins = RushRules.debugStartingSpins(arguments: CommandLine.arguments) {
+            rushActive = true
+            rushLeft = spins
+            rushCasts = 0
+            rushStartScore = score
+        }
+        #endif
+        snd.bgm(rushActive ? .rush : .idle)
         phase = .idle
         prompt = "CASTボタン長押しでキャスト"
         fx?.resetScene()
@@ -325,8 +340,12 @@ final class GameModel: ObservableObject {
         chargePower = 0
         snd.play("cast")
         fx?.castLure(power: power)
-        if rushLeft > 0 {
+        if rushActive && rushLeft > 0 {
             rushLeft -= 1
+            rushCasts += 1
+            if rushLeft <= RushRules.warningSpins {
+                snd.play(rushLeft == 0 ? "countgo" : "count")
+            }
         }
         schedule(0.45) { [weak self] in self?.land(power: power) }
     }
@@ -384,19 +403,19 @@ final class GameModel: ObservableObject {
         }
         var r = Double.random(in: 0...1)
         // 金の竿: 分布を上振り（Lv×8%レア寄り）
-        r = 1 - (1 - r) * (1 - 0.08 * Double(rareLv))
+        r = RushRules.boost(r, rareLevel: rareLv)
         result = rarityForRoll(r)
         applyGearLimits()
     }
 
     /// 確率テーブル: r ∈ [0,1) → Rarity?（nil = 逃げ）。RUSH中は確率緩和
-    private func rarityForRoll(_ r: Double) -> Rarity? {
+    func rarityForRoll(_ r: Double) -> Rarity? {
         if rushActive {
             switch r {
-            case ..<0.18: return nil
+            case ..<RushRules.missThreshold: return nil
             case ..<0.36: return .n
             case ..<0.52: return .r
-            case ..<0.66: return .sr
+            case ..<RushRules.bonusThreshold: return .sr
             case ..<0.82: return .ssr
             case ..<0.95: return .ur
             default: return .lr
@@ -414,16 +433,16 @@ final class GameModel: ObservableObject {
     }
 
     /// 逃げ判定の閾値（再抽選はここより上を引く）
-    private var missThreshold: Double { rushActive ? 0.18 : 0.42 }
+    private var missThreshold: Double { rushActive ? RushRules.missThreshold : 0.42 }
 
     private func applyGearLimits() {
         // 竿Lvが釣れるレアの上限 (Lv0:SR / 1:SSR / 2:UR / 3+:LR) — ゲーム内非表示仕様
-        let cap: Rarity = [.sr, .ssr, .ur, .lr, .lr, .lr][min(rareLv, 5)]
+        let cap = RushRules.rarityCap(rareLevel: rareLv)
         if let res = result, res.rawValue > cap.rawValue { result = cap }
         // 強化リール: 逃げを小型以上で再抽選 (Lv×15%)。Lvが高いほど大物寄り(Lv×10%上振り)
-        if result == nil, Double.random(in: 0...1) < 0.15 * Double(reelLv) {
+        if result == nil, Double.random(in: 0...1) < RushRules.reelRescueProbability(reelLevel: reelLv) {
             var r2 = Double.random(in: missThreshold...1.0)
-            r2 = 1 - (1 - r2) * (1 - 0.10 * Double(reelLv))
+            r2 = RushRules.reelBoost(r2, reelLevel: reelLv)
             let res = rarityForRoll(r2) ?? .n
             result = Rarity(rawValue: min(res.rawValue, cap.rawValue))
         }
@@ -721,6 +740,8 @@ final class GameModel: ObservableObject {
             dismissReveal()
         case .title:
             startGame()
+        case .rushEnding:
+            dismissRushSummary()
         default: break
         }
     }
@@ -800,11 +821,7 @@ final class GameModel: ObservableObject {
         medals += medal
         combo += 1
 
-        var rushGain = 0
-        if r == .ur { rushGain = 10 }
-        if r == .lr { rushGain = 15 }
-        if rushActive && r.rawValue >= Rarity.ssr.rawValue { rushGain += 2 }
-        if rushGain > 0 { rushGain += rushLv }   // RUSH券
+        let rushGain = RushRules.gain(for: r, active: rushActive, rushLevel: rushLv)
 
         reveal = Caught(name: pick.name, imageName: pick.imageName, rarity: r, cm: cm,
                         score: sc, medals: medal, perfect: perfect, isRecord: isRecord,
@@ -853,11 +870,15 @@ final class GameModel: ObservableObject {
     }
 
     func dismissReveal() {
-        guard phase == .reveal else { return }
-        let rushGain = reveal?.rushGain ?? 0
+        guard phase == .reveal, let caught = reveal else { return }
+        let rushGain = caught.rushGain
         reveal = nil
         if rushGain > 0 {
             let wasActive = rushActive
+            if !wasActive {
+                rushCasts = 0
+                rushStartScore = score
+            }
             rushActive = true
             rushLeft += rushGain
             fx?.setRushLook(true)
@@ -897,6 +918,10 @@ final class GameModel: ObservableObject {
     }
 
     private func toIdle() {
+        if rushActive && rushLeft <= 0 {
+            endRush()
+            return
+        }
         phase = .idle
         landed = false
         prompt = autoCast ? "AUTO: 強さ\(Int(autoPower * 100))%で連投中" : "CASTボタン長押しでキャスト"
@@ -905,14 +930,37 @@ final class GameModel: ObservableObject {
         fx?.zoomTo(1)
         scheduleAmbient()
         if autoCast { schedule(1.0) { [weak self] in self?.autoFire() } }
-        if rushActive && rushLeft <= 0 {
-            rushActive = false
-            fx?.setRushLook(false)
-            snd.bgm(.idle)
-            showBanner("RUSH終了", sub: "通常モードへ", style: .info, ttl: 1.6)
-        } else if !rushActive {
+        if !rushActive {
             snd.bgm(.idle)
         }
+    }
+
+    private func endRush() {
+        phase = .rushEnding
+        rushActive = false
+        rushLeft = 0
+        let summary = RushSummary(casts: rushCasts, score: score - rushStartScore)
+        rushSummary = summary
+        prompt = ""
+        promptHot = false
+        banner = nil
+        oldManCue = nil
+        landed = false
+        fx?.resetScene()
+        fx?.setRushLook(false)
+        fx?.zoomTo(1)
+        snd.stopBGM()
+        snd.play("rush_out")
+        schedule(RushRules.endingDuration) { [weak self] in
+            guard self?.rushSummary?.id == summary.id else { return }
+            self?.dismissRushSummary()
+        }
+    }
+
+    func dismissRushSummary() {
+        guard phase == .rushEnding else { return }
+        rushSummary = nil
+        toIdle()
     }
 
 }

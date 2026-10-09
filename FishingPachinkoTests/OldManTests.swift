@@ -63,7 +63,7 @@ final class OldManTests: XCTestCase {
     }
 
     func testCueCannotInterruptInteractiveOrResultPhases() {
-        for phase: Phase in [.title, .charging, .flying, .mash, .reveal, .escaping] {
+        for phase: Phase in [.title, .charging, .flying, .mash, .reveal, .escaping, .rushEnding] {
             let model = GameModel()
             model.phase = phase
             model.showOldMan("…大物の気配がする", heat: .hot)

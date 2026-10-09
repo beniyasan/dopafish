@@ -93,6 +93,10 @@ struct ContentView: View {
                     .onTapGesture { model.dismissReveal() }
             }
 
+            if let summary = model.rushSummary {
+                RushEndView(summary: summary, onContinue: model.dismissRushSummary)
+            }
+
             if showDex {
                 DexOverlay(onClose: { showDex = false })
             }
@@ -176,18 +180,7 @@ struct ContentView: View {
                     .background(Color.yellow, in: Capsule())
             }
             if model.rushActive {
-                HStack(spacing: 6) {
-                    Text("🔥 RUSH")
-                        .font(.system(size: 17, weight: .black, design: .rounded))
-                    Text("残り \(model.rushLeft) 回転")
-                        .font(.system(size: 15, weight: .black, design: .rounded))
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 18).padding(.vertical, 6)
-                .background(
-                    LinearGradient(colors: [.yellow, .orange, .red], startPoint: .leading, endPoint: .trailing),
-                    in: Capsule())
-                .shadow(color: .yellow.opacity(0.8), radius: 12)
+                RushHUD(status: model.rushStatus, bonusProbability: model.rushBonusProbability)
             }
         }
     }
