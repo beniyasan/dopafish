@@ -227,7 +227,7 @@ final class RushTests: XCTestCase {
             model.pressCast()
             XCTAssertEqual(model.phase, .rushEnding)
             if tapToClose {
-                model.dismissRushSummary()
+                model.tapScreen()
                 model.dismissRushSummary()
             } else {
                 model.tick(1.4)
@@ -240,6 +240,62 @@ final class RushTests: XCTestCase {
             XCTAssertFalse(model.rushActive)
             XCTAssertEqual(model.rushLeft, 0)
         }
+    }
+
+    @MainActor
+    func testSummaryStopsBGMAndUnmutingDoesNotRestoreIt() throws {
+        let sound = SoundEngine.shared
+        sound.prepare()
+        defer {
+            sound.stopBGM()
+            sound.muted = true
+        }
+        let model = startRush(spins: 1)
+        castToMash(model)
+        let oldPlayer = try XCTUnwrap(sound.bgmPlayer)
+        model.phase = .reveal
+        model.reveal = caught(.n, gain: 0)
+        model.dismissReveal()
+        XCTAssertEqual(model.phase, .rushEnding)
+        XCTAssertNil(sound.bgmPlayer)
+        sound.muted = false
+        XCTAssertEqual(oldPlayer.volume, 0, accuracy: 0.001)
+        let stopped = expectation(description: "Ending music stops after fading")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+            XCTAssertFalse(oldPlayer.isPlaying)
+            XCTAssertNil(sound.bgmPlayer)
+            stopped.fulfill()
+        }
+        wait(for: [stopped], timeout: 2)
+    }
+
+    @MainActor
+    func testOldBGMFadeDoesNotStopNormalMusicAfterEarlyDismissal() throws {
+        let sound = SoundEngine.shared
+        sound.prepare()
+        defer {
+            sound.stopBGM()
+            sound.muted = true
+        }
+        let model = startRush(spins: 1)
+        castToMash(model)
+        let oldPlayer = try XCTUnwrap(sound.bgmPlayer)
+        model.phase = .reveal
+        model.reveal = caught(.n, gain: 0)
+        model.dismissReveal()
+        model.tapScreen()
+        let idlePlayer = try XCTUnwrap(sound.bgmPlayer)
+        XCTAssertFalse(oldPlayer === idlePlayer)
+        sound.muted = false
+        XCTAssertEqual(idlePlayer.volume, 0.5, accuracy: 0.001)
+        let stopped = expectation(description: "Only the previous music stops")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+            XCTAssertFalse(oldPlayer.isPlaying)
+            XCTAssertTrue(sound.bgmPlayer === idlePlayer)
+            XCTAssertEqual(idlePlayer.volume, 0.5, accuracy: 0.001)
+            stopped.fulfill()
+        }
+        wait(for: [stopped], timeout: 2)
     }
 
     #if DEBUG

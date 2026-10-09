@@ -157,7 +157,7 @@ final class SoundEngine {
 
     private var sePlayers: [String: [AVAudioPlayer]] = [:]
     private var seIndex: [String: Int] = [:]
-    private var bgmPlayer: AVAudioPlayer?
+    private(set) var bgmPlayer: AVAudioPlayer?
     private var currentBGM: BGM?
     var muted = false { didSet { applyMute() } }
 
@@ -314,8 +314,13 @@ final class SoundEngine {
     }
 
     func stopBGM() {
-        bgmPlayer?.setVolume(0, fadeDuration: 0.3)
+        let player = bgmPlayer
+        bgmPlayer = nil
         currentBGM = nil
+        player?.setVolume(0, fadeDuration: 0.3)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            player?.stop()
+        }
     }
 
     private func applyMute() {

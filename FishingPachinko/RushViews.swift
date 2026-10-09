@@ -118,6 +118,8 @@ struct RushEndView: View {
             .overlay(RoundedRectangle(cornerRadius: 24).stroke(.orange, lineWidth: 2))
             .padding(.horizontal, 16)
         }
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onContinue)
     }
 
     private func result(_ value: String, label: String) -> some View {
