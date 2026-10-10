@@ -81,5 +81,6 @@ xcodebuild -project FishingPachinko.xcodeproj -scheme FishingPachinko \
 - `GameScene.swift` — SpriteKit 描画（海・ウキ・魚影・パーティクル・カメラズーム）
 - `GameModel.swift` — ゲーム状態機械・確率・リーチ演出スクリプト・ファイト・RUSH・装備強化・図鑑
 - `CollectionView.swift` — 魚図鑑（DexOverlay）・釣具屋（ShopOverlay）画面
-- `SoundEngine.swift` — WAV合成（SE 20種＋BGM 3曲）・AVAudioPlayer・ハプティクス
+- `SoundEngine.swift` — WAV合成（SE 20種＋BGM 3曲）・AVAudioPlayer
+- `Haptics.swift` — 場面別の触覚パターン（Core Haptics、非対応端末はUIFeedbackGeneratorで代用）。右上のボタンでON/OFF（保存される）
 - `FishingPachinkoTests/OldManTests.swift` — セリフの寿命・重複・表示制御・アセット・画面幅別レンダリングの自動テスト

@@ -253,6 +253,7 @@ final class GameModel: ObservableObject {
     }()
 
     private let snd = SoundEngine.shared
+    var haptics: HapticOutput = HapticEngine.shared
 
     // MARK: clock / scheduler
 
@@ -344,13 +345,16 @@ final class GameModel: ObservableObject {
         chargePower = 0
         snd.play("cast")
         fx?.castLure(power: power)
+        var isLastCast = false
         if rushActive && rushLeft > 0 {
             rushLeft -= 1
             rushCasts += 1
+            isLastCast = rushLeft == 0
             if rushLeft <= RushRules.warningSpins {
                 snd.play(rushLeft == 0 ? "countgo" : "count")
             }
         }
+        haptics.play(isLastCast ? .lastCast : .castRelease(power: power))
         schedule(0.45) { [weak self] in self?.land(power: power) }
     }
 
@@ -375,6 +379,7 @@ final class GameModel: ObservableObject {
         snd.play("splash")
         fx?.lureLanded()
         fx?.splashFX(big: power > 0.85)
+        haptics.play(.lureLanded(big: power > 0.85))
         phase = .waiting
         biteTimer = fast ? 0.3 : Double.random(in: 1.0...3.0) - power * 0.4
         rollResult()
@@ -386,6 +391,7 @@ final class GameModel: ObservableObject {
                 guard self?.phase == .waiting else { return }
                 self?.fx?.bobberDip(strength: 0.4)
                 self?.snd.play("tick")
+                self?.haptics.play(.nibble)
             }
         }
     }
@@ -396,7 +402,7 @@ final class GameModel: ObservableObject {
         pickReach()
         fx?.bobberDip(strength: 1)
         snd.play("bite")
-        Hap.impact(.medium)
+        haptics.play(.bite)
         runReach()
     }
 
@@ -551,7 +557,7 @@ final class GameModel: ObservableObject {
         oldManCue = cue
         if heat.isCutIn {
             snd.play("cutin")
-            Hap.impact(.heavy)
+            haptics.play(.cutIn(premium: heat == .premium))
             fx?.shake(heat == .premium ? 5 : 3)
         }
         schedule(heat.duration) { [weak self] in
@@ -615,7 +621,7 @@ final class GameModel: ObservableObject {
             enterSuperLook()
             schedule(0.1) { [weak self] in self?.showBanner("大物の影だ!!", sub: "スーパーバトルリーチ", style: .hot, ttl: 1.8) }
             for i in 0..<7 {
-                schedule(0.5 + Double(i) * 0.7) { [weak self] in self?.snd.play("heart"); Hap.impact(.heavy) }
+                schedule(0.5 + Double(i) * 0.7) { [weak self] in self?.snd.play("heart"); self?.haptics.play(.heartbeat(level: 2)) }
             }
             schedule(3.4) { [weak self] in self?.showBanner("まだ逃げてない…!!", style: .hot, ttl: 1.4) }
             schedule(4.9) { [weak self] in self?.showBanner("手前まで来た!!", style: .hot, ttl: 1.2) }
@@ -623,13 +629,13 @@ final class GameModel: ObservableObject {
             enterPremiumLook(rainbow: false)
             schedule(0.1) { [weak self] in self?.showBanner("ゴールデンバトル!!", sub: "確変大物の激闘…!", style: .gold, ttl: 2.2) }
             for i in 0..<8 {
-                schedule(0.5 + Double(i) * 0.65) { [weak self] in self?.snd.play("heart"); Hap.impact(.heavy) }
+                schedule(0.5 + Double(i) * 0.65) { [weak self] in self?.snd.play("heart"); self?.haptics.play(.heartbeat(level: 3)) }
             }
             schedule(3.0) { [weak self] in self?.showBanner("折れそうだ…!!", style: .gold, ttl: 1.4) }
             for i in 0..<3 {
                 schedule(5.4 + Double(i) * 0.7) { [weak self] in
                     self?.prompt = "\(3 - i)"; self?.promptHot = true
-                    self?.snd.play("count"); Hap.impact(.heavy); self?.fx?.shake(6)
+                    self?.snd.play("count"); self?.haptics.play(.countdown(step: i)); self?.fx?.shake(6)
                 }
             }
             schedule(7.6) { [weak self] in self?.prompt = "GO!!"; self?.snd.play("countgo") }
@@ -639,14 +645,14 @@ final class GameModel: ObservableObject {
             schedule(2.0) { [weak self] in self?.showBanner("虹色バトル!!!", sub: "伝説確定!?", style: .rainbow, ttl: 2.4) }
             for i in 0..<8 {
                 schedule(0.6 + Double(i) * 0.75) { [weak self] in
-                    self?.fx?.sparkleBurst(color: .white); self?.snd.play("heart"); Hap.impact(.heavy)
+                    self?.fx?.sparkleBurst(color: .white); self?.snd.play("heart"); self?.haptics.play(.heartbeat(level: 4))
                 }
             }
             schedule(6.4) { [weak self] in self?.showBanner("伝説が暴れてる!!!", style: .rainbow, ttl: 1.6) }
             for i in 0..<3 {
                 schedule(7.0 + Double(i) * 0.7) { [weak self] in
                     self?.prompt = "\(3 - i)"; self?.promptHot = true
-                    self?.snd.play("count"); Hap.impact(.heavy); self?.fx?.shake(7)
+                    self?.snd.play("count"); self?.haptics.play(.countdown(step: i)); self?.fx?.shake(7)
                 }
             }
             schedule(9.1) { [weak self] in self?.prompt = "GO!!"; self?.snd.play("countgo") }
@@ -661,7 +667,7 @@ final class GameModel: ObservableObject {
         fx?.shake(strong ? 7 : 3)
         if strong { fx?.shockwave(big: false) }
         snd.play(strong ? "surge" : "bite")
-        Hap.impact(strong ? .heavy : .medium)
+        haptics.play(.surge(strong: strong))
     }
 
     private func endReach() {
@@ -758,7 +764,6 @@ final class GameModel: ObservableObject {
         guard !mashDone else { return }
         mashCount += 1
         snd.play("reel")
-        Hap.impact(.light)
         fx?.bobberDip(strength: 0.5)
         fx?.shockwave(big: false)
         if mashCount % 6 == 0 { fx?.shake(4); fx?.splashFX(big: true) }
@@ -766,6 +771,7 @@ final class GameModel: ObservableObject {
         // ハズレ結果は連打してもメーターが85%で止まる — クライマックスでバレる
         mashFill = result == nil ? min(raw, 0.85 + 0.04 * sin(mashT * 9)) : min(1, raw)
         if result != nil { mashTapsLeft = max(0, mashNeed - mashCount) }
+        haptics.play(.mashTap(progress: mashFill, closing: (1...5).contains(mashTapsLeft ?? 0)))
         if let r = result, mashCount >= mashNeed {
             // overfill = 激連打 bonus
             let perfect = mashCount >= Int(Double(mashNeed) * 1.25)
@@ -797,7 +803,7 @@ final class GameModel: ObservableObject {
         prompt = ""
         snd.play("hook")
         snd.play("impact")
-        Hap.impact(.heavy)
+        haptics.play(.hook)
         fx?.hookLunge()
         fx?.splashFX(big: true)
         fx?.shockwave(big: true)
@@ -849,13 +855,13 @@ final class GameModel: ObservableObject {
         fx?.setSpeedLines(0)
         fx?.setAura(0)
 
+        haptics.play(.catchResult(r))
         // jackpot presentation
         if r.rawValue >= Rarity.ur.rawValue {
             doFlash(.yellow, 0.7, 0.3)
             snd.play("fanfare_big")
             snd.play("thunder")
             snd.play("shine")
-            Hap.notify(.success)
             showBanner(r == .lr ? "超弩級当たり!!!!" : "大当たり!!!", sub: "+\(sc)pt", style: r == .lr ? .rainbow : .gold, ttl: 2.4)
             fx?.coinRain(min(60, medal))
             fx?.lightPillar(color: r == .lr
@@ -868,7 +874,6 @@ final class GameModel: ObservableObject {
             doFlash(.white, 0.5, 0.2)
             snd.play("fanfare")
             snd.play("shine")
-            Hap.notify(.success)
             showBanner("当たり!", sub: "+\(sc)pt", style: .hot, ttl: 1.8)
             fx?.coinRain(min(30, medal))
             fx?.lightPillar(color: UIColorCompat(red: 0.6, green: 0.9, blue: 1, alpha: 1))
@@ -877,7 +882,6 @@ final class GameModel: ObservableObject {
             // 小物 — ハズレ相当の拍子抜け演出
             snd.play("deny")
             snd.play("coin")
-            Hap.notify(.warning)
             showBanner("…小物だった", sub: "+\(sc)pt", style: .miss, ttl: 1.6)
             fx?.coinRain(min(12, medal))
         }
@@ -899,6 +903,7 @@ final class GameModel: ObservableObject {
             fx?.setRushLook(true)
             snd.bgm(.rush)
             snd.play("rush_in")
+            haptics.play(.rushIn(continued: wasActive))
             snd.play("shine")
             fx?.lightPillar(color: UIColorCompat(red: 1, green: 0.85, blue: 0.3, alpha: 1))
             fx?.starShower(24)
@@ -921,7 +926,7 @@ final class GameModel: ObservableObject {
         combo = 0
         snd.play("escape")
         snd.play("break")
-        Hap.notify(.error)
+        haptics.play(report == nil ? .shortMiss : .lineSnap(nearMiss: report?.isNearMiss ?? false))
         fx?.setFightLook(struggling: false)
         fx?.setOrbit(speed: 0, radius: 0, visible: false)
         fx?.zoomTo(1)

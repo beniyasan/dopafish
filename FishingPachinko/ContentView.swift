@@ -5,6 +5,7 @@ struct ContentView: View {
     @StateObject private var model = GameModel()
     @State private var scene: GameScene = GameScene()
     @State private var muted = false
+    @State private var hapticsOn = HapticEngine.shared.enabled
     @State private var hotPulse = false
     @State private var showDex = false
     @State private var showShop = false
@@ -116,15 +117,31 @@ struct ContentView: View {
             VStack {
                 HStack {
                     Spacer()
-                    Button {
-                        muted.toggle()
-                        SoundEngine.shared.muted = muted
-                    } label: {
-                        Image(systemName: muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                            .font(.title2)
-                            .foregroundStyle(.white)
-                            .padding(10)
-                            .background(.black.opacity(0.35), in: Circle())
+                    HStack(spacing: 6) {
+                        Button {
+                            muted.toggle()
+                            SoundEngine.shared.muted = muted
+                        } label: {
+                            Image(systemName: muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                                .font(.title2)
+                                .foregroundStyle(.white)
+                                .frame(width: 28, height: 28)
+                                .padding(10)
+                                .background(.black.opacity(0.35), in: Circle())
+                        }
+                        Button {
+                            hapticsOn.toggle()
+                            HapticEngine.shared.enabled = hapticsOn
+                            if hapticsOn { HapticEngine.shared.play(.bite) }
+                        } label: {
+                            Image(systemName: hapticsOn ? "iphone.radiowaves.left.and.right" : "iphone.slash")
+                                .font(.title2)
+                                .foregroundStyle(.white)
+                                .frame(width: 28, height: 28)
+                                .padding(10)
+                                .background(.black.opacity(0.35), in: Circle())
+                        }
+                        .accessibilityLabel(hapticsOn ? "触覚オン" : "触覚オフ")
                     }
                     .padding(.trailing, 8)
                     .padding(.top, 4)
@@ -164,6 +181,8 @@ struct ContentView: View {
                         Text("COMBO ×\(model.combo)")
                             .font(.system(size: 15, weight: .black, design: .rounded))
                             .foregroundStyle(.orange)
+                            .lineLimit(1)
+                            .fixedSize()
                     }
                     Text("BEST \(model.bestScore)")
                         .font(.system(size: 11, weight: .bold, design: .rounded))
@@ -174,7 +193,7 @@ struct ContentView: View {
                             .foregroundStyle(.white.opacity(0.6))
                     }
                 }
-                .padding(.trailing, 54) // leave room for mute
+                .padding(.trailing, 118) // leave room for mute + haptics toggles
                 .padding(.top, 8)
             }
             if model.autoCast {

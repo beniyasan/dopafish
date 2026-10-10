@@ -327,14 +327,3 @@ final class SoundEngine {
         bgmPlayer?.volume = muted ? 0 : 0.5
     }
 }
-
-// MARK: - Haptics
-
-enum Hap {
-    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .medium) {
-        UIImpactFeedbackGenerator(style: style).impactOccurred()
-    }
-    static func notify(_ type: UINotificationFeedbackGenerator.FeedbackType) {
-        UINotificationFeedbackGenerator().notificationOccurred(type)
-    }
-}
