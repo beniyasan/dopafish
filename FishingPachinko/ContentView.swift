@@ -181,6 +181,8 @@ struct ContentView: View {
                         Text("COMBO ×\(model.combo)")
                             .font(.system(size: 15, weight: .black, design: .rounded))
                             .foregroundStyle(.orange)
+                            .lineLimit(1)
+                            .fixedSize()
                     }
                     Text("BEST \(model.bestScore)")
                         .font(.system(size: 11, weight: .bold, design: .rounded))
