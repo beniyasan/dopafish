@@ -60,7 +60,7 @@ xcodebuild -project FishingPachinko.xcodeproj -scheme FishingPachinko \
 
 ## デバッグ起動引数（シミュレータ検証用）
 
-- `-rig ur|lr|ssr|sr|r|n|miss` … 次のバイト結果を固定
+- `-rig ur|lr|ssr|sr|r|n|miss|bluff` … 次のバイト結果を固定（`bluff` は魚なしのスーパーリーチ＝ガセ）
 - `-fast` … バイトまでの待ち時間を短縮
 - `-mashneed X` … 連打必要数の倍率（0.05ならほぼ1発で釣れる）
 - `-win` … 連打フェーズを自動タップ（当たり演出確認用）
