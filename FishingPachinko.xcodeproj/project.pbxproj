@@ -24,6 +24,7 @@
 		DC1A952011D0B59A1746824E /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C39DBF1B393F538512E4A2 /* GameScene.swift */; };
 		DED4DB5221D4D4034655932B /* FishingPachinkoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 768699E885CEF2CBA9D53273 /* FishingPachinkoApp.swift */; };
 		E49EBC4A00ED3C86C0DB0BF9 /* EscapeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CC7E1AE9E3AE1E8D7A7E2AF /* EscapeTests.swift */; };
+		E505AA2D2B4CA6F582484EC6 /* MashPerfectTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F36C8136191FF880450BF8 /* MashPerfectTests.swift */; };
 		E644300DD4E63540958DA6E9 /* OldManView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C72B521F2EEF15D050A182E /* OldManView.swift */; };
 		E7A680A056ACAEA1662C76C2 /* EscapeReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F914B5CB304431F49CE25B43 /* EscapeReport.swift */; };
 		E90E4BCA39B16E3A056D2C3D /* FishArtworkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE822CFEF8042FCDADECD67D /* FishArtworkTests.swift */; };
@@ -43,6 +44,7 @@
 /* Begin PBXFileReference section */
 		004C7E5CA8644C775A22332F /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		11D63D8AD13E651D65B5AF1F /* RushTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RushTests.swift; sourceTree = "<group>"; };
+		11F36C8136191FF880450BF8 /* MashPerfectTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MashPerfectTests.swift; sourceTree = "<group>"; };
 		1803FBD6526624CD12129F4B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2CC7E1AE9E3AE1E8D7A7E2AF /* EscapeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EscapeTests.swift; sourceTree = "<group>"; };
 		2DAC076B756A3573644B0D51 /* HapticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsTests.swift; sourceTree = "<group>"; };
@@ -82,6 +84,7 @@
 				2CC7E1AE9E3AE1E8D7A7E2AF /* EscapeTests.swift */,
 				BE822CFEF8042FCDADECD67D /* FishArtworkTests.swift */,
 				2DAC076B756A3573644B0D51 /* HapticsTests.swift */,
+				11F36C8136191FF880450BF8 /* MashPerfectTests.swift */,
 				ECF85F5742E1CE9F043C3BE7 /* OldManTests.swift */,
 				E252BC91E86BDE32D5EC8AAC /* RevealCardFXTests.swift */,
 				11D63D8AD13E651D65B5AF1F /* RushTests.swift */,
@@ -209,6 +212,7 @@
 				E49EBC4A00ED3C86C0DB0BF9 /* EscapeTests.swift in Sources */,
 				E90E4BCA39B16E3A056D2C3D /* FishArtworkTests.swift in Sources */,
 				136AA45604A07F6382025071 /* HapticsTests.swift in Sources */,
+				E505AA2D2B4CA6F582484EC6 /* MashPerfectTests.swift in Sources */,
 				19E3060E6EC503446DA18497 /* OldManTests.swift in Sources */,
 				B4C51D0954212F089D494C98 /* RevealCardFXTests.swift in Sources */,
 				B6AA4D6EA428E3D24EE7EA34 /* RushTests.swift in Sources */,

@@ -63,7 +63,7 @@ xcodebuild -project FishingPachinko.xcodeproj -scheme FishingPachinko \
 - `-rig ur|lr|ssr|sr|r|n|miss|bluff` … 次のバイト結果を固定（`bluff` は魚なしのスーパーリーチ＝ガセ）
 - `-fast` … バイトまでの待ち時間を短縮
 - `-mashneed X` … 連打必要数の倍率（0.05ならほぼ1発で釣れる）
-- `-win` … 連打フェーズを自動タップ（当たり演出確認用）
+- `-win` … 連打フェーズを必要数ちょうどまで自動タップ（通常成功の確認用。`-mashneed 0.2` なら必要数＝PERFECT数になり激連打 PERFECT を確認できる）
 - `-secret` … 次の釣果を幻魚に固定（図鑑・カード確認用）
 - `-go` … タイトルをスキップして即キャスト（カード演出のハンズフリー確認用）
 - `-rush 1...99` … Debugビルド限定で指定回数のRUSHから開始（例: `-rush 4 -rig miss -fast` で終盤・終了確認。抽選率表示は強制結果ではなく通常の抽選仕様）

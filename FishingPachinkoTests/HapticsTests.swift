@@ -113,12 +113,16 @@ final class HapticsTests: XCTestCase {
         for _ in 0..<14 { model.tapScreen() }      // SR mashNeed = 14
         let taps = mashTaps()
         XCTAssertEqual(taps.count, 14)
-        XCTAssertEqual(taps.filter(\.1).count, 5, "残り5〜1回の5打だけ強い振動")
+        XCTAssertEqual(taps.filter(\.1).count, 6, "残り5〜0回（引き上げ確定打まで）だけ強い振動")
         XCTAssertFalse(taps[7].1)
         XCTAssertTrue(taps[8].1)
+        XCTAssertTrue(taps[13].1)
         XCTAssertLessThan(taps[0].0, taps[7].0)
-        XCTAssertEqual(spy.cues.last, .hook)
+        XCTAssertFalse(spy.cues.contains(.hook), "タイムアップまでフッキングしない")
 
+        for _ in 0..<200 where !spy.cues.contains(.hook) { model.tick(0.05) }
+        XCTAssertEqual(model.phase, .mash)
+        XCTAssertEqual(spy.cues.last, .hook)
         model.tick(0.6)
         XCTAssertEqual(model.phase, .reveal)
         XCTAssertEqual(spy.cues.last, .catchResult(.sr))

@@ -174,6 +174,8 @@ final class GameModel: ObservableObject {
     @Published var mashRemain: Double = 0
     /// 本物の魚が掛かっている時だけの残り必要連打数（ガセ中はnil）
     @Published private(set) var mashTapsLeft: Int?
+    /// 引き上げ確定後、激連打 PERFECT までの残り連打数（確定前・ガセ中はnil、0でPERFECT確定）
+    @Published private(set) var mashPerfectLeft: Int?
     @Published private(set) var escapeReport: EscapeReport?
     @Published var autoCast = false
     var autoPower: Double = 0.65
@@ -231,10 +233,14 @@ final class GameModel: ObservableObject {
     private var mashT = 0.0
     private var mashDur = 3.0
     private var mashNeed = 12
+    private var mashPerfectNeed = 15
     private var mashDone = false            // 連打フェーズが解決済みか（多重resolveCatch防止）
     private var rushCasts = 0
     private var rushStartScore = 0
     private var escapeShownAt = 0.0
+    private var revealShownAt = -Double.infinity
+    /// 連打の余りタップで釣果カードが即閉じしないよう、表示直後のタップを無視する時間
+    static let revealSkipLockDuration = 0.6
 
     // debug: -rig ur / -rig miss etc, -fast for instant bites
     private let rig: String? = {
@@ -276,7 +282,7 @@ final class GameModel: ObservableObject {
         case .mash:
             mashT += dt
             mashRemain = max(0, mashDur - mashT)
-            if autoWin { onMashTap() }
+            if autoWin, mashCount < mashNeed { onMashTap() }
             if mashRemain <= 0 { resolveMash() }
         default: break
         }
@@ -730,7 +736,9 @@ final class GameModel: ObservableObject {
         mashDone = false
         mashDur = 2.4 + 0.32 * Double(reachKind) + 0.4 * Double(reelLv)
         mashNeed = Int(Double(result.map { [8, 10, 14, 18, 22, 28][$0.rawValue] } ?? 999) * mashMult)
+        mashPerfectNeed = Int(Double(mashNeed) * 1.25)
         mashTapsLeft = result == nil ? nil : mashNeed
+        mashPerfectLeft = nil
         prompt = "連打!!"
         promptHot = true
         snd.play("cutin")
@@ -770,20 +778,27 @@ final class GameModel: ObservableObject {
         let raw = Double(mashCount) / Double(max(1, mashNeed))
         // ハズレ結果は連打してもメーターが85%で止まる — クライマックスでバレる
         mashFill = result == nil ? min(raw, 0.85 + 0.04 * sin(mashT * 9)) : min(1, raw)
-        if result != nil { mashTapsLeft = max(0, mashNeed - mashCount) }
-        haptics.play(.mashTap(progress: mashFill, closing: (1...5).contains(mashTapsLeft ?? 0)))
-        if let r = result, mashCount >= mashNeed {
-            // overfill = 激連打 bonus
-            let perfect = mashCount >= Int(Double(mashNeed) * 1.25)
-            _ = r
-            resolveCatch(perfect: perfect)
+        guard result != nil else {
+            haptics.play(.mashTap(progress: mashFill, closing: false))
+            return
         }
+        mashTapsLeft = max(0, mashNeed - mashCount)
+        // 引き上げ確定後もタイムアップまで連打を受け付け、PERFECTを狙わせる
+        if mashCount >= mashNeed {
+            let wasPerfect = mashPerfectLeft == 0
+            mashPerfectLeft = max(0, mashPerfectNeed - mashCount)
+            if mashCount == mashNeed { fx?.shockwave(big: true) }
+            if mashPerfectLeft == 0 && !wasPerfect {
+                fx?.shake(6)
+                fx?.splashFX(big: true)
+            }
+        }
+        haptics.play(.mashTap(progress: mashFill, closing: mashNeed - mashCount <= 5))
     }
 
     private func resolveMash() {
-        if let r = result, mashCount >= mashNeed {
-            _ = r
-            resolveCatch(perfect: false)
+        if result != nil, mashCount >= mashNeed {
+            resolveCatch(perfect: mashCount >= mashPerfectNeed)
         } else if let r = result {
             // 連打不足 — 実際に掛かっていた魚を見せる（図鑑・スコアには記録しない）
             let fish = fishPool[r]!.randomElement()!
@@ -848,6 +863,7 @@ final class GameModel: ObservableObject {
                         score: sc, medals: medal, perfect: perfect, isRecord: isRecord,
                         rushGain: rushGain, isSmall: small, isSecret: isSecret)
         phase = .reveal
+        revealShownAt = now
         prompt = ""
         fx?.setFightLook(struggling: false)
         fx?.setOrbit(speed: 0, radius: 0, visible: false)
@@ -888,8 +904,9 @@ final class GameModel: ObservableObject {
         schedule(0.5) { [weak self] in self?.fx?.splashFX(big: true) }
     }
 
-    func dismissReveal() {
+    func dismissReveal(force: Bool = false) {
         guard phase == .reveal, let caught = reveal else { return }
+        guard force || now - revealShownAt >= Self.revealSkipLockDuration else { return }
         let rushGain = caught.rushGain
         reveal = nil
         if rushGain > 0 {
@@ -922,6 +939,7 @@ final class GameModel: ObservableObject {
         phase = .escaping
         prompt = ""
         mashTapsLeft = nil
+        mashPerfectLeft = nil
         tension = 0
         combo = 0
         snd.play("escape")
