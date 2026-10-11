@@ -83,4 +83,20 @@ final class MashPerfectTests: XCTestCase {
         runOutMash(model)
         XCTAssertEqual(model.phase, .escaping)
     }
+
+    func testLeftoverTapsAfterTimeoutDoNotSkipPerfectCard() {
+        let model = castToMash(result: .ssr)
+        for _ in 0..<25 { model.tapScreen() }
+        for _ in 0..<200 where model.phase == .mash { model.tick(0.05); model.tapScreen() }
+        XCTAssertEqual(model.phase, .reveal)
+        XCTAssertEqual(model.reveal?.perfect, true)
+        model.tapScreen()
+        model.tick(0.3)
+        model.tapScreen()
+        XCTAssertEqual(model.phase, .reveal, "表示直後の余りタップでは閉じない")
+        model.tick(0.31)
+        model.tapScreen()
+        XCTAssertNotEqual(model.phase, .reveal)
+        XCTAssertNil(model.reveal)
+    }
 }

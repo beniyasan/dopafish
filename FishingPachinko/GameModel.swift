@@ -238,6 +238,9 @@ final class GameModel: ObservableObject {
     private var rushCasts = 0
     private var rushStartScore = 0
     private var escapeShownAt = 0.0
+    private var revealShownAt = -Double.infinity
+    /// 連打の余りタップで釣果カードが即閉じしないよう、表示直後のタップを無視する時間
+    static let revealSkipLockDuration = 0.6
 
     // debug: -rig ur / -rig miss etc, -fast for instant bites
     private let rig: String? = {
@@ -860,6 +863,7 @@ final class GameModel: ObservableObject {
                         score: sc, medals: medal, perfect: perfect, isRecord: isRecord,
                         rushGain: rushGain, isSmall: small, isSecret: isSecret)
         phase = .reveal
+        revealShownAt = now
         prompt = ""
         fx?.setFightLook(struggling: false)
         fx?.setOrbit(speed: 0, radius: 0, visible: false)
@@ -900,8 +904,9 @@ final class GameModel: ObservableObject {
         schedule(0.5) { [weak self] in self?.fx?.splashFX(big: true) }
     }
 
-    func dismissReveal() {
+    func dismissReveal(force: Bool = false) {
         guard phase == .reveal, let caught = reveal else { return }
+        guard force || now - revealShownAt >= Self.revealSkipLockDuration else { return }
         let rushGain = caught.rushGain
         reveal = nil
         if rushGain > 0 {
