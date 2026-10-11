@@ -342,13 +342,24 @@ struct ContentView: View {
         VStack(spacing: 14) {
             Spacer()
             let left = model.mashTapsLeft ?? 0
-            Text("あと\(left)回!!")
-                .font(.system(size: 30, weight: .black, design: .rounded))
-                .foregroundStyle(LinearGradient(colors: [.yellow, .red],
-                                                startPoint: .top, endPoint: .bottom))
-                .shadow(color: .red, radius: 10)
-                .contentTransition(.numericText())
-                .opacity((1...5).contains(left) ? 1 : 0)
+            let perfectLeft = model.mashPerfectLeft
+            Group {
+                if perfectLeft == 0 {
+                    Text("PERFECT確定!!")
+                } else if let p = perfectLeft {
+                    Text("PERFECTまで あと\(p)回!!")
+                } else {
+                    Text("あと\(left)回!!")
+                }
+            }
+            .font(.system(size: 30, weight: .black, design: .rounded))
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .foregroundStyle(LinearGradient(colors: perfectLeft == nil ? [.yellow, .red] : [.white, .yellow],
+                                            startPoint: .top, endPoint: .bottom))
+            .shadow(color: perfectLeft == nil ? .red : .orange, radius: 10)
+            .contentTransition(.numericText())
+            .opacity(perfectLeft != nil || (1...5).contains(left) ? 1 : 0)
             ZStack(alignment: .leading) {
                 Capsule().fill(.white.opacity(0.2)).frame(height: 34)
                 Capsule()
